@@ -1,0 +1,70 @@
+import openai
+import json
+import os
+from google.colab import files
+
+def read_api_key_file(file_name):
+    with open(file_name, 'r') as f:
+        api_key = f.read().strip()
+    return api_key
+
+def read_conversation_file(file_name):
+    with open(file_name, 'r') as f:
+        conversation = f.read()
+    return conversation
+
+class ChatGPT:
+    def __init__(self, api_key, model="text-davinci-003"):
+        self.api_key = api_key
+        self.model = model
+        openai.api_key = self.api_key
+
+    def generate_summary(self, conversation):
+        summary_structure = '''
+- 商談の出席者
+- 事業内容
+- 営業体制
+- 問い合わせ背景と課題の詳細
+- 現状
+- 目標
+- 課題
+- 競合
+- コンペリングイベント
+- 顧客の意思決定プロセス
+- 最終決裁者
+- 予算
+- 導入決定基準
+- 懸念事項
+- ネクストアクション
+- 備考
+'''
+        prompt = f"要約したい会話の一部: {conversation[:3500]}\n\n以下の構成で要約を行ってください:\n{summary_structure}"
+        response = openai.Completion.create(
+            engine=self.model,
+            prompt=prompt,
+            max_tokens=500,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+        return response.choices[0].text.strip()
+
+# ファイルをアップロードして要約を実行
+print("APIキーファイルをアップロードしてください:")
+api_key_file = files.upload()
+api_key_file_name = list(api_key_file.keys())[0]
+
+print("会話ファイルをアップロードしてください:")
+conversation_file = files.upload()
+conversation_file_name = list(conversation_file.keys())[0]
+
+api_key = read_api_key_file(api_key_file_name)
+conversation = read_conversation_file(conversation_file_name)
+
+model_name = "text-davinci-003"  # GPT-4がリリースされたら、ここを適切なモデル名に更新してください
+
+chat_gpt = ChatGPT(api_key, model=model_name)
+summary = chat_gpt.generate_summary(conversation)
+
+print("\n要約結果:")
+print(summary)
